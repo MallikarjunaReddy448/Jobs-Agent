@@ -18,6 +18,15 @@ import json
 import random
 import argparse
 import logging
+# from industry_selection_prevent_apply import select_multiple_industries
+# from industry_selection_improved import select_multiple_industries
+# from industry_selection_refresh_aware import select_multiple_industries
+# from industry_selection_visual_based import select_multiple_industries
+# from industry_selection_reload_based  import select_multiple_industries
+# from industry_selection_scroll_based import select_multiple_industries
+# from industry_selection_last_fix import select_multiple_industries #latest final version
+from industry_selection_verify_new import select_multiple_industries
+from department_selection_verify import select_multiple_departments
 from pathlib import Path
 from datetime import datetime, date
 
@@ -277,7 +286,7 @@ def apply_to_multiple_jobs(job_queue, chrome_profile_path, user_data, output_dir
 # Import the job eligibility function from keyword_matcher.py
 from stages.llm_matcher.keyword_matcher import check_job_eligibility, get_matching_skills
 
-def search_naukri_with_selenium(profile_path, roles, locations, experience, freshness, max_jobs=10):
+def search_naukri_with_selenium(profile_path, roles, locations, experience, freshness, max_jobs=10, industries=None, departments=None):
     """Search for jobs on Naukri.com using Selenium.
 
     Args:
@@ -565,292 +574,127 @@ def search_naukri_with_selenium(profile_path, roles, locations, experience, fres
 
         if apply_industry_filter:
             # Define industry types available on Naukri
-            industry_types = [
-                        "IT Services & Consulting",
-                        "BPM / BPO",
-                        "Analytics / KPO / Research",
-                        "Software Product",
-                        "Internet",
-                        "Electronic Components / Semiconductors",
-                        "Electronics Manufacturing",
-                        "Emerging Technologies",
-                        "Hardware & Networking",
-                        "Recruitment / Staffing",
-                        "Management Consulting",
-                        "Accounting / Auditing",
-                        "Architecture / Interior Design",
-                        "Facility Management Services",
-                        "Design",
-                        "Law Enforcement / Security Services",
-                        "Legal",
-                        "Content Development / Language",
-                        "Banking",
-                        "Financial Services",
-                        "Investment Banking / Venture Capital / Private Equity",
-                        "Insurance",
-                        "FinTech / Payments",
-                        "NBFC",
-                        "Medical Services / Hospital",
-                        "Pharmaceutical & Life Sciences",
-                        "Biotechnology",
-                        "Medical Devices & Equipment",
-                        "Clinical Research / Contract Research",
-                        "Education / Training",
-                        "E-Learning / EdTech",
-                        "Advertising & Marketing",
-                        "Telecom / ISP",
-                        "Film / Music / Entertainment",
-                        "Gaming",
-                        "TV / Radio",
-                        "Printing & Publishing",
-                        "Animation & VFX",
-                        "Events / Live Entertainment",
-                        "Sports / Leisure & Recreation",
-                        "Industrial Equipment / Machinery",
-                        "Automobile",
-                        "Auto Components",
-                        "Defence & Aerospace",
-                        "Industrial Automation",
-                        "Building Material",
-                        "Electrical Equipment",
-                        "Petrochemical / Plastics / Rubber",
-                        "Chemicals",
-                        "Packaging & Containers",
-                        "Iron & Steel",
-                        "Pulp & Paper",
-                        "Fertilizers / Pesticides / Agro chemicals",
-                        "Metals & Mining",
-                        "Engineering & Construction",
-                        "Power",
-                        "Real Estate",
-                        "Courier / Logistics",
-                        "Oil & Gas",
-                        "Aviation",
-                        "Railways",
-                        "Ports & Shipping",
-                        "Water Treatment / Waste Management",
-                        "Urban Transport",
-                        "Retail",
-                        "Consumer Electronics & Appliances",
-                        "Textile & Apparel",
-                        "Travel & Tourism",
-                        "FMCG",
-                        "Hotels & Restaurants",
-                        "Fitness & Wellness",
-                        "Food Processing",
-                        "Beverage",
-                        "Furniture & Furnishing",
-                        "Gems & Jewellery",
-                        "NGO / Social Services / Industry Associations",
-                        "Agriculture / Forestry / Fishing",
-                        "Government / Public Administration",
-                        "Import & Export"
-                    ]
+            
 
 
-            # Display industry types
-            print("\nAvailable Industry Types:")
-            for i, industry in enumerate(industry_types, 1):
-                print(f"{i}. {industry}")
+            # # Display industry types
+            # print("\nAvailable Industry Types:")
+            # for i, industry in enumerate(industries, 1):
+            #     print(f"{i}. {industry}")
 
-            # Allow multiple selections
-            selected_industries = []
-            while True:
-                industry_input = input("\nEnter industry number (or 0 to finish selection): ").strip()
-                if industry_input == "0":
-                    break
+            # # Allow multiple selections
+            # selected_industries = []
+            # while True:
+            #     industry_input = input("\nEnter industry number (or 0 to finish selection): ").strip()
+            #     if industry_input == "0":
+            #         break
 
-                if industry_input.isdigit() and 1 <= int(industry_input) <= len(industry_types):
-                    selected_index = int(industry_input) - 1
-                    selected_industry = industry_types[selected_index]
-                    if selected_industry not in selected_industries:
-                        # Add the selected industry if not already in list
-                        selected_industries.append(selected_industry)
-                        print(f"✅ Added {selected_industry}")
-                        print(f"Current selections: {', '.join(selected_industries)}")
-                    else:
-                        print(f"⚠️ {selected_industry} already selected")
-                else:
-                    print(f"⚠️ Please enter a valid number between 1 and {len(industry_types)}, or 0 to finish")
-
+            #     if industry_input.isdigit() and 1 <= int(industry_input) <= len(industries):
+            #         selected_index = int(industry_input) - 1
+            #         selected_industry = industries[selected_index]
+            #         if selected_industry not in selected_industries:
+            #             # Add the selected industry if not already in list
+            #             selected_industries.append(selected_industry)
+            #             print(f"✅ Added {selected_industry}")
+            #             print(f"Current selections: {', '.join(selected_industries)}")
+            #         else:
+            #             print(f"⚠️ {selected_industry} already selected")
+            #     else:
+            #         print(f"⚠️ Please enter a valid number between 1 and {len(industries)}, or 0 to finish")
+            selected_industries = industries
             if selected_industries:
                 print(f"\n🏢 Selected Industries: {', '.join(selected_industries)}")
-
+                
+                # # Try to find and click the "View more" button for industries first
                 # try:
-                #     # Use direct JavaScript approach for industry selection
-                #     try:
-                #         # Import the integration module
-                #         from industry_selection_integration import integrate_industry_selection
+                #     # Try multiple selectors for the industry "View more" button
+                #     view_more_selectors = [
+                #         "//*[@id='industryIdGid']/span",  # Specific industry view more xpath
+                #         '//*[@id="industryTypeIdGid"]/span',
+                #         "/html/body/div/div/main/div[1]/div[1]/div/div/div[2]/div[10]/div[2]/a/span",
+                #         "//span[contains(text(),'View More')]",
+                #         "//span[contains(text(),'View More')])[7]",
+                #         "//div[contains(@class, 'industry-filter')]//span[contains(text(), 'View more')]",
+                #         "//div[contains(@class, 'industry-filter')]//span[contains(@class, 'view-more')]",
+                #         "//div[contains(@class, 'styles_view-more')]",
+                #         "//span[contains(text(), 'View more')]"
+                #     ]
 
-                #         # Use direct JavaScript to select industries
-                #         success = integrate_industry_selection(driver, selected_industries)
+                #     view_more_clicked = False
+                #     for selector in view_more_selectors:
+                #         try:
+                #             view_more_button = WebDriverWait(driver, 3).until(
+                #                 EC.element_to_be_clickable((By.XPATH, selector))
+                #             )
+                #             if view_more_button:
+                #                 view_more_button.click()
+                #                 print("✅ Clicked on 'View more' button for industries")
+                #                 time.sleep(2)  # Wait for the full list to appear
+                #                 view_more_clicked = True
+                #                 break
+                #         except:
+                #             continue
 
-                #         if success:
-                #             print("✅ Industry selection was successful")
-                #         else:
-                #             print("❌ Industry selection failed")
-                #     except Exception as e:
-                #         print(f"❌ Error with industry selection: {e}")
+                #     if not view_more_clicked:
+                #         print("⚠️ Could not find 'View more' button for industries, trying alternative approach")
+                #         # Click on Industry filter first
+                #         industry_filter_selectors = [
+                #             "//div[contains(@class, 'industry-filter')]",
+                #             "//div[contains(text(), 'Industry')]/parent::div",
+                #             "//span[contains(text(), 'Industry')]/parent::div"
+                #         ]
 
-                #     # Take a screenshot after industry selection
-                #     try:
-                #         screenshot_path = "after_industry_selection.png"
-                #         driver.save_screenshot(screenshot_path)
-                #         print(f"📸 Saved screenshot after industry selection to {screenshot_path}")
-                #     except Exception as e:
-                #         print(f"⚠️ Error taking screenshot: {e}")
-                # Replace the problematic code section (around line 688) with:
-                
-                # Directly click on "View more" option to see all departments without clicking on department text first
-                
-                # Try to find and click the "View more" button for industries first
-                try:
-                    # Try multiple selectors for the industry "View more" button
-                    view_more_selectors = [
-                        "//*[@id='industryIdGid']/span",  # Specific industry view more xpath
-                        '//*[@id="industryTypeIdGid"]/span',
-                        "/html/body/div/div/main/div[1]/div[1]/div/div/div[2]/div[10]/div[2]/a/span",
-                        "//span[contains(text(),'View More')]",
-                        "//span[contains(text(),'View More')])[7]",
-                        "//div[contains(@class, 'industry-filter')]//span[contains(text(), 'View more')]",
-                        "//div[contains(@class, 'industry-filter')]//span[contains(@class, 'view-more')]",
-                        "//div[contains(@class, 'styles_view-more')]",
-                        "//span[contains(text(), 'View more')]"
-                    ]
+                #         for selector in industry_filter_selectors:
+                #             try:
+                #                 industry_filter = WebDriverWait(driver, 3).until(
+                #                     EC.element_to_be_clickable((By.XPATH, selector))
+                #                 )
+                #                 if industry_filter:
+                #                     industry_filter.click()
+                #                     print("✅ Clicked on Industry filter")
+                #                     time.sleep(1)
+                #                     break
+                #             except:
+                #                 continue
 
-                    view_more_clicked = False
-                    for selector in view_more_selectors:
-                        try:
-                            view_more_button = WebDriverWait(driver, 3).until(
-                                EC.element_to_be_clickable((By.XPATH, selector))
-                            )
-                            if view_more_button:
-                                view_more_button.click()
-                                print("✅ Clicked on 'View more' button for industries")
-                                time.sleep(2)  # Wait for the full list to appear
-                                view_more_clicked = True
-                                break
-                        except:
-                            continue
-
-                    if not view_more_clicked:
-                        print("⚠️ Could not find 'View more' button for industries, trying alternative approach")
-                        # Click on Industry filter first
-                        industry_filter_selectors = [
-                            "//div[contains(@class, 'industry-filter')]",
-                            "//div[contains(text(), 'Industry')]/parent::div",
-                            "//span[contains(text(), 'Industry')]/parent::div"
-                        ]
-
-                        for selector in industry_filter_selectors:
-                            try:
-                                industry_filter = WebDriverWait(driver, 3).until(
-                                    EC.element_to_be_clickable((By.XPATH, selector))
-                                )
-                                if industry_filter:
-                                    industry_filter.click()
-                                    print("✅ Clicked on Industry filter")
-                                    time.sleep(1)
-                                    break
-                            except:
-                                continue
-
-                except Exception as e:
-                    print(f"❌ Error with View more button: {e}")
+                # except Exception as e:
+                #     print(f"❌ Error with View more button: {e}")
 
 
 
                 try:
-                    # Click on Industry filter to open the tooltip
-                    industry_filter = WebDriverWait(driver, 5).until(
-                        EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'industry-filter')]"))
-                    )
-                    industry_filter.click()
-                    print("✅ Clicked on industry filter")
-                    time.sleep(1)
-
-                    # Now for each selected industry
-                    for industry in selected_industries:
-                        try:
-                            # Find and click the search input
-                            search_input = WebDriverWait(driver, 5).until(
-                                EC.presence_of_element_located((By.CLASS_NAME, "styles_search-input__Ftbsv"))
-                            )
-                            search_input.clear()
-                            search_input.send_keys(industry)
-                            time.sleep(1)  # Wait for search results
-
-                            # Find and click the checkbox for this industry
-                            checkbox_xpath = f"//label[contains(@class, 'styles_chkLbl__n2x09')]//span[contains(text(), '{industry}')]"
-                            checkbox = WebDriverWait(driver, 5).until(
-                                EC.element_to_be_clickable((By.XPATH, checkbox_xpath))
-                            )
-                            checkbox.click()
-                            print(f"✅ Selected industry: {industry}")
-                            time.sleep(1)
-                        except Exception as e:
-                            print(f"❌ Error selecting industry {industry}: {e}")
-
-                        try:
-                            # trying with normal xpaths
-                            # checkbox_xpath = f"//label[contains(@class, 'styles_chkLbl__n2x09')]//span[contains(text() = '{industry}')]/predceding-sibling::input"
-                            checkbox_xpath = f"/html/body/div/div/main/div[1]/div[1]/div/div/div[2]/div[10]/div[3]/div[2]/div[2]/div/div[1]/div[2]/label/p/span[1]"
-                        except Exception as e:
-                            print(f"❌ Error selecting industry {industry} with normal xpath: {e}")
-
-                    # Click Apply button
-                    apply_button = WebDriverWait(driver, 5).until(
-                        EC.element_to_be_clickable((By.CLASS_NAME, "styles_filter-apply-btn__MDAUd"))
-                    )
-                    apply_button.click()
-                    print("✅ Applied industry filters")
-                    time.sleep(2)  # Wait for filters to apply
-
-
+                    # Use the imported industry selection function
+                    print(f"🏢 Using imported industry selection for: {', '.join(selected_industries)}")
+                    select_multiple_industries(driver, selected_industries)
                 except Exception as e:
                     print(f"❌ Error with industry selection: {e}")
+                
+                # Click outside any open popups to close them
+                try:
+                    print("\n🔍 Closing any open filter popups...")
+                    # Try clicking on the body element to close any open popups
+                    driver.execute_script("document.body.click();")
+                    time.sleep(2)
+
+                    # If that doesn't work, try clicking at a random position away from popups
+                    actions = ActionChains(driver)
+                    actions.move_by_offset(100, 100).click().perform()
+                    time.sleep(2)
+                    
+                    # Reset the mouse position
+                    actions.move_by_offset(-100, -100).perform()
+                    print("✅ Clicked outside popups")                  
+                except Exception as e:
+                    print(f"⚠️ Error closing popups: {e}")
+                
+                
 
         # Department/Functional Area Filter
         print("\n🧩 Do you want to filter by Department/Functional Area?")
         apply_department_filter = input("Apply Department filter? (y/n): ").strip().lower() == 'y'
 
         if apply_department_filter:
-            # Define departments available on Naukri
-            departments = [
-                    "Engineering - Software & QA",
-                    "Data Science & Analytics",
-                    "Engineering - Hardware & Networks",
-                    "IT & Information Security",
-                    "Customer Success, Service & Operations",
-                    "Finance & Accounting",
-                    "Quality Assurance",
-                    "Other",
-                    "Healthcare & Life Sciences",
-                    "Consulting",
-                    "Sales & Business Development",
-                    "Research & Development",
-                    "UX, Design & Architecture",
-                    "Marketing & Communication",
-                    "Teaching & Training",
-                    "Investments & Trading",
-                    "Construction & Site Engineering",
-                    "Product Management",
-                    "Project & Program Management",
-                    "Content, Editorial & Journalism",
-                    "Procurement & Supply Chain",
-                    "Human Resources",
-                    "Risk Management & Compliance",
-                    "Food, Beverage & Hospitality",
-                    "Merchandising, Retail & eCommerce",
-                    "Administration & Facilities",
-                    "Media Production & Entertainment",
-                    "Strategic & Top Management",
-                    "Environment Health & Safety",
-                    "Legal & Regulatory",
-                    "Aviation & Aerospace",
-                    "CSR & Social Service",
-                    "Sports, Fitness & Personal Care"
-                ]
+            
 
 
             # Display departments
@@ -877,323 +721,18 @@ def search_naukri_with_selenium(profile_path, roles, locations, experience, fres
                     print(f"Please enter a valid number between 1 and {len(departments)}, or 0 to finish")
 
             if selected_departments:
-                print(f"\n🧩 Selected Departments: {', '.join(selected_departments)}")
-
+                # print(f"\n🧩 Selected Departments: {', '.join(selected_departments)}")
                 try:
-                    # Directly click on "View more" option to see all departments without clicking on department text first
-                    try:
-                        # Try to find and click the "View more" button using the specific XPath
-                        view_more_button = WebDriverWait(driver, 5).until(
-                            EC.element_to_be_clickable((By.XPATH, "//*[@id='functionalAreaIdGid']/span"))
-                        )
-                        view_more_button.click()
-                        print("✅ Clicked on 'View more' button for departments")
-                        time.sleep(2)  # Wait for the full list to appear
-                    except Exception as e:
-                        print(f"❌ Could not click on 'View more' button with specific XPath: {e}")
-
-                        # Try alternative approach - first click on department filter then view more
-                        try:
-                            # Click on Department/Functional Area filter first
-                            department_filter_selectors = [
-                                "//div[contains(text(), 'Functional Area')]/parent::div",
-                                "//span[contains(text(), 'Functional Area')]/parent::div",
-                                "//div[contains(text(), 'Department')]/parent::div",
-                                "//span[contains(text(), 'Department')]/parent::div",
-                                "//div[contains(@class, 'filter-functional-area')]",
-                                "//div[contains(@class, 'department-filter')]"
-                            ]
-
-                            department_filter = None
-                            for selector in department_filter_selectors:
-                                try:
-                                    department_filter = WebDriverWait(driver, 3).until(
-                                        EC.element_to_be_clickable((By.XPATH, selector))
-                                    )
-                                    if department_filter:
-                                        department_filter.click()
-                                        print("✅ Clicked on Department/Functional Area filter")
-                                        time.sleep(2)  # Wait for dropdown to appear
-                                        break
-                                except:
-                                    continue
-
-                            # Then try to click on view more
-                            if department_filter:
-                                view_more_selectors = [
-                                    "//span[contains(text(), 'View more')]",
-                                    "//span[contains(text(), 'view more')]",
-                                    "//a[contains(text(), 'View more')]",
-                                    "//a[contains(text(), 'view more')]",
-                                    "//div[contains(@class, 'view-more')]",
-                                    "//div[contains(@class, 'viewMore')]"
-                                ]
-
-                                for selector in view_more_selectors:
-                                    try:
-                                        view_more = WebDriverWait(driver, 3).until(
-                                            EC.element_to_be_clickable((By.XPATH, selector))
-                                        )
-                                        if view_more:
-                                            view_more.click()
-                                            print(f"✅ Clicked on 'View more' using alternative selector: {selector}")
-                                            time.sleep(2)  # Wait for the full list to appear
-                                            break
-                                    except:
-                                        continue
-                        except Exception as e:
-                            print(f"❌ Error with alternative approach for department filter: {e}")
-
-                        # Using a focused approach with the search functionality for departments
-                        try:
-                            print(f"🔍 Looking for department checkboxes for: {', '.join(selected_departments)}")
-
-                            # Take a screenshot for debugging
-                            try:
-                                screenshot_path = "department_filter_screenshot.png"
-                                driver.save_screenshot(screenshot_path)
-                                print(f"📸 Saved screenshot to {screenshot_path}")
-                            except Exception as e:
-                                print(f"⚠️ Error taking screenshot: {e}")
-
-                            # Wait for the search input to be clickable
-                            try:
-                                search_input = WebDriverWait(driver, 5).until(
-                                    EC.element_to_be_clickable((By.CLASS_NAME, "styles_search-input__Ftbsv"))
-                                )
-                                print("✅ Found search input field")
-                            except Exception as e:
-                                print(f"❌ Could not find search input field: {e}")
-                                # Try alternative selectors if the specific class name fails
-                                try:
-                                    search_input = WebDriverWait(driver, 5).until(
-                                        EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Search Department' or @placeholder='Search Functional Area']"))
-                                    )
-                                    print("✅ Found search input field using alternative selector")
-                                except Exception as e:
-                                    print(f"❌ Could not find search input field with alternative selector: {e}")
-                                    # Try a more general approach
-                                    try:
-                                        search_input = WebDriverWait(driver, 5).until(
-                                            EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'search-container')]//input"))
-                                        )
-                                        print("✅ Found search input field using general selector")
-                                    except Exception as e:
-                                        print(f"❌ Could not find search input field with general selector: {e}")
-                                        raise Exception("Could not find search input field")
-
-                            # Process each selected department one by one
-                            selected_count = 0
-                            for department in selected_departments:
-                                try:
-                                    print(f"\n🔍 Searching for department: {department}")
-
-                                    # Clear the search input and type the department name
-                                    search_input.clear()
-                                    time.sleep(0.5)
-                                    search_input.send_keys(department)
-                                    time.sleep(1.5)  # Wait for search results
-
-                                    # Try to find the matching checkbox label
-                                    # First try exact match
-                                    try:
-                                        # Look for exact matches first
-                                        department_labels = driver.find_elements(
-                                            By.XPATH,
-                                            f"//label[contains(@class, 'styles_chkLbl__n2x09')]//span[contains(@class, 'styles_filterLabel__jRP04') and text()='{department}']"
-                                        )
-
-                                        # If no exact match, try partial matches
-                                        if not department_labels:
-                                            department_labels = driver.find_elements(
-                                                By.XPATH,
-                                                f"//label[contains(@class, 'styles_chkLbl__n2x09')]//span[contains(@class, 'styles_filterLabel__jRP04') and contains(text(), '{department}')]"
-                                            )
-
-                                        if department_labels:
-                                            # Click the parent label to check the checkbox
-                                            parent_label = department_labels[0].find_element(By.XPATH, "./ancestor::label")
-                                            parent_label.click()
-                                            print(f"✅ Selected department: {department}")
-                                            selected_count += 1
-                                            time.sleep(1)
-                                        else:
-                                            print(f"⚠️ No matching labels found for: {department}")
-
-                                            # Try a more general approach - find all visible labels after search
-                                            all_labels = driver.find_elements(By.CSS_SELECTOR, "label.styles_chkLbl__n2x09")
-                                            print(f"Found {len(all_labels)} labels after search")
-
-                                            if all_labels:
-                                                # Click the first label (assuming search narrowed down results)
-                                                all_labels[0].click()
-                                                print(f"✅ Selected first visible label after searching for: {department}")
-                                                selected_count += 1
-                                                time.sleep(1)
-                                            else:
-                                                print(f"❌ No labels found after searching for: {department}")
-
-                                                # Try JavaScript as a last resort
-                                                try:
-                                                    js_script = """
-                                                    (function() {
-                                                        // Try to find any visible label after search
-                                                        const labels = document.querySelectorAll('label.styles_chkLbl__n2x09');
-                                                        if (labels.length > 0) {
-                                                            labels[0].click();
-                                                            return true;
-                                                        }
-                                                        return false;
-                                                    })();
-                                                    """
-                                                    result = driver.execute_script(js_script)
-                                                    if result:
-                                                        print(f"✅ Selected department using JavaScript after searching for: {department}")
-                                                        selected_count += 1
-                                                        time.sleep(1)
-                                                    else:
-                                                        print(f"❌ JavaScript also failed for: {department}")
-                                                except Exception as e:
-                                                    print(f"❌ JavaScript error for {department}: {e}")
-                                    except Exception as e:
-                                        print(f"❌ Error selecting department {department}: {e}")
-                                except Exception as e:
-                                    print(f"❌ Error processing department {department}: {e}")
-
-                            print(f"\n✅ Selected {selected_count} out of {len(selected_departments)} departments")
-
-                            # If we couldn't select any departments, try a more aggressive approach
-                            if selected_count == 0:
-                                print("⚠️ Could not select any departments, trying one more approach")
-
-                                try:
-                                    # Clear the search input to show all options
-                                    search_input.clear()
-                                    time.sleep(1)
-
-                                    # Try to click on any visible checkbox to see if it works
-                                    checkboxes = driver.find_elements(By.CSS_SELECTOR, "label.styles_chkLbl__n2x09")
-                                    if checkboxes:
-                                        print(f"Found {len(checkboxes)} checkboxes, trying to click the first few")
-                                        for i, checkbox in enumerate(checkboxes[:3]):  # Try first 3
-                                            try:
-                                                checkbox.click()
-                                                print(f"✅ Clicked checkbox #{i+1}")
-                                                time.sleep(1)
-                                                selected_count += 1
-                                            except Exception as e:
-                                                print(f"❌ Could not click checkbox #{i+1}: {e}")
-                                except Exception as e:
-                                    print(f"❌ Error with aggressive approach: {e}")
-                        except Exception as e:
-                            print(f"❌ Error selecting departments: {e}")
-
-                        # Apply the department filter
-                        try:
-                            # Find and click the Apply button
-                            apply_button_selectors = [
-                                # Try the specific class from the HTML
-                                ".styles_filter-apply-btn__MDAUd",
-                                # Try the specific XPath
-                                "//*[@id='tooltip']/div[2]/div[3]/div[2]",
-                                # Try more general selectors
-                                ".styles_bottom-layer__KKIyL div:last-child",
-                                "div.styles_filter-apply-btn__MDAUd",
-                                # Try text-based selectors
-                                "//div[text()='Apply']",
-                                "//div[contains(text(), 'Apply')]",
-                                "//button[contains(text(), 'Apply')]",
-                                "//a[contains(text(), 'Apply')]",
-                                "//span[contains(text(), 'Apply')]"
-                            ]
-
-                            apply_button = None
-                            for selector in apply_button_selectors:
-                                try:
-                                    if selector.startswith(".") or selector.startswith("#"):
-                                        # CSS selector
-                                        apply_button = WebDriverWait(driver, 3).until(
-                                            EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
-                                        )
-                                    else:
-                                        # XPath
-                                        apply_button = WebDriverWait(driver, 3).until(
-                                            EC.element_to_be_clickable((By.XPATH, selector))
-                                        )
-
-                                    if apply_button:
-                                        apply_button.click()
-                                        print(f"✅ Applied Department filter using selector: {selector}")
-                                        time.sleep(3)  # Wait for results to update
-                                        break
-                                except Exception as e:
-                                    print(f"⚠️ Error with apply button selector {selector}: {e}")
-                                    continue
-
-                            # If we couldn't find the apply button with any selector, try JavaScript
-                            if not apply_button:
-                                try:
-                                    js_script = """
-                                    (function() {
-                                        const applyElements = ['button', 'div', 'a', 'span'];
-                                        for (const tag of applyElements) {
-                                            const elements = document.querySelectorAll(tag);
-                                            for (const el of elements) {
-                                                if (el.textContent.trim() === 'Apply') {
-                                                    el.click();
-                                                    return true;
-                                                }
-                                            }
-                                        }
-
-                                        // Try by class
-                                        var applyBtn = document.querySelector('.styles_filter-apply-btn__MDAUd');
-                                        if (applyBtn) {
-                                            applyBtn.click();
-                                            return true;
-                                        }
-
-                                        // Try the bottom layer div
-                                        var bottomLayer = document.querySelector('.styles_bottom-layer__KKIyL');
-                                        if (bottomLayer) {
-                                            var lastChild = bottomLayer.lastElementChild;
-                                            if (lastChild) {
-                                                lastChild.click();
-                                                return true;
-                                            }
-                                        }
-
-                                        return false;
-                                    })();
-                                    """
-                                    result = driver.execute_script(js_script)
-                                    if result:
-                                        print("✅ Applied Department filter using JavaScript")
-                                        time.sleep(3)  # Wait for results to update
-                                    else:
-                                        print("⚠️ Could not find Apply button with JavaScript")
-                                except Exception as e:
-                                    print(f"❌ JavaScript error for Apply button: {e}")
-
-                            # Wait for the filter to be applied and results to update
-                            print("\n⏳ Waiting for department filter to be applied...")
-                            time.sleep(5)  # Give extra time for the filter to apply
-
-                            # Take a screenshot after applying the filter
-                            try:
-                                screenshot_path = "after_department_filter_screenshot.png"
-                                driver.save_screenshot(screenshot_path)
-                                print(f"📸 Saved screenshot after applying department filter to {screenshot_path}")
-                            except Exception as e:
-                                print(f"⚠️ Error taking screenshot: {e}")
-                        except Exception as e:
-                            print(f"❌ Error applying department filter: {e}")
+                    # Use the imported industry selection function
+                    print(f"🏢 Using imported department selection for: {', '.join(selected_departments)}")
+                    select_multiple_departments(driver, selected_departments)
                 except Exception as e:
-                    print(f"Error with Department/Functional Area filter: {e}")
+                    print(f"❌ Error with department selection: {e}")
+                
 
         # Wait for results to update
         print("\n⏳ Waiting for results to update...")
-        time.sleep(5)
+        time.sleep(50000000)
 
         # Take a screenshot of final results
         screenshot_path = os.path.join(screenshots_dir, f"naukri_final_results_{int(time.time())}.png")
@@ -1874,6 +1413,231 @@ def main():
                 print(f"Job Roles: {', '.join(previous_preferences['job_roles'])}")
                 print(f"Locations: {', '.join(previous_preferences['locations'])}")
                 print(f"Skills: {', '.join(previous_preferences['skills'])}")
+                # print(f"Industry Filters: {', '.join(previous_preferences['industries'])}")
+                # print(f"Department Filters: {', '.join(previous_preferences['departments'])}")
+                
+                # Display industries if they exist
+                industries = previous_preferences.get('industries',[])
+                if industries:
+                    print(f"Industry Filters: {', '.join(industries)}")
+                else:
+                    print("Industries Filters: None")
+                
+                # Display departments if they exist
+                departments = previous_preferences.get('departments',[])
+                if industries:
+                    print(f"Departments Filters: {', '.join(departments)}")
+                else:
+                    print("Departments Filters: None")
+
+                # Ask if user wants to modify industry filters
+                modify_industries = input("\n❓ Do you want to add/modify industry filters? (y/n): ").lower() == 'y'
+                if modify_industries:
+                    # Define industry types available on Naukri
+                    industry_types = [
+                        "IT Services & Consulting",
+                        "BPM / BPO",
+                        "Analytics / KPO / Research",
+                        "Software Product",
+                        "Internet",
+                        "Electronic Components / Semiconductors",
+                        "Electronics Manufacturing",
+                        "Emerging Technologies",
+                        "Hardware & Networking",
+                        "Recruitment / Staffing",
+                        "Management Consulting",
+                        "Accounting / Auditing",
+                        "Architecture / Interior Design",
+                        "Facility Management Services",
+                        "Design",
+                        "Law Enforcement / Security Services",
+                        "Legal",
+                        "Content Development / Language",
+                        "Banking",
+                        "Financial Services",
+                        "Investment Banking / Venture Capital / Private Equity",
+                        "Insurance",
+                        "FinTech / Payments",
+                        "NBFC",
+                        "Medical Services / Hospital",
+                        "Pharmaceutical & Life Sciences",
+                        "Biotechnology",
+                        "Medical Devices & Equipment",
+                        "Clinical Research / Contract Research",
+                        "Education / Training",
+                        "E-Learning / EdTech",
+                        "Advertising & Marketing",
+                        "Telecom / ISP",
+                        "Film / Music / Entertainment",
+                        "Gaming",
+                        "TV / Radio",
+                        "Printing & Publishing",
+                        "Animation & VFX",
+                        "Events / Live Entertainment",
+                        "Sports / Leisure & Recreation",
+                        "Industrial Equipment / Machinery",
+                        "Automobile",
+                        "Auto Components",
+                        "Defence & Aerospace",
+                        "Industrial Automation",
+                        "Building Material",
+                        "Electrical Equipment",
+                        "Petrochemical / Plastics / Rubber",
+                        "Chemicals",
+                        "Packaging & Containers",
+                        "Iron & Steel",
+                        "Pulp & Paper",
+                        "Fertilizers / Pesticides / Agro chemicals",
+                        "Metals & Mining",
+                        "Engineering & Construction",
+                        "Power",
+                        "Real Estate",
+                        "Courier / Logistics",
+                        "Oil & Gas",
+                        "Aviation",
+                        "Railways",
+                        "Ports & Shipping",
+                        "Water Treatment / Waste Management",
+                        "Urban Transport",
+                        "Retail",
+                        "Consumer Electronics & Appliances",
+                        "Textile & Apparel",
+                        "Travel & Tourism",
+                        "FMCG",
+                        "Hotels & Restaurants",
+                        "Fitness & Wellness",
+                        "Food Processing",
+                        "Beverage",
+                        "Furniture & Furnishing",
+                        "Gems & Jewellery",
+                        "NGO / Social Services / Industry Associations",
+                        "Agriculture / Forestry / Fishing",
+                        "Government / Public Administration",
+                        "Import & Export"
+                    ]
+                    # Display industry types
+                    print("\nAvailable Industry Types:")
+                    for i, industry in enumerate(industry_types, 1):
+                        print(f"{i}. {industry}")
+                    
+                    # Allow multiple selections
+                    selected_industries = []
+                    while True:
+                        industry_input = input("\nEnter industry number (or 0 to finish selection): ").strip()
+                        if industry_input == "0":
+                            break
+                        
+                        if industry_input.isdigit() and 1 <= int(industry_input) <= len(industry_types):
+                            selected_index = int(industry_input) - 1
+                            selected_industry = industry_types[selected_index]
+                            if selected_industry not in selected_industries:
+                                # Add the selected industry if not already in list
+                                selected_industries.append(selected_industry)
+                                print(f"✅ Added {selected_industry}")
+                                print(f"Current selections: {', '.join(selected_industries)}")
+                            else:
+                                print(f"⚠️ {selected_industry} already selected")
+                        else:
+                            print(f"⚠️ Please enter a valid number between 1 and {len(industry_types)}, or 0 to finish")
+                    
+                    if selected_industries:
+                        # Update the previous preferences with the new selections
+                        previous_preferences['industries'] = selected_industries
+                        industries = selected_industries
+
+                        # Save ONLY the updated industries to the database
+                        if DATABASE_AVAILABLE and user_id:
+                            preference_id = save_search_preferences(
+                                user_id=user_id,
+                                job_roles=previous_preferences['job_roles'],  # Use existing roles
+                                locations=previous_preferences["locations"],  # Use existing locations
+                                skills=previous_preferences['skills'],        # Use existing skills
+                                industries=selected_industries,               # Use new industries
+                                departments=previous_preferences.get('departments', [])   # Use existing departments
+                            )
+
+                            if preference_id:
+                                print(f"\n✅ Industry preferences updated in database: {', '.join(selected_industries)}")
+
+                # Ask if user wants to modify department filters
+                # modify_departments = input("\n❓ Do you want to add/modify department filters? (y/n): ").strip().lower() == 'y'
+                # if modify_departments:
+                #     # Define departments available on Naukri
+                #     departments = [
+                #             "Engineering - Software & QA",
+                #             "Data Science & Analytics",
+                #             "Engineering - Hardware & Networks",
+                #             "IT & Information Security",
+                #             "Customer Success, Service & Operations",
+                #             "Finance & Accounting",
+                #             "Quality Assurance",
+                #             "Other",
+                #             "Healthcare & Life Sciences",
+                #             "Consulting",
+                #             "Sales & Business Development",
+                #             "Research & Development",
+                #             "UX, Design & Architecture",
+                #             "Marketing & Communication",
+                #             "Teaching & Training",
+                #             "Investments & Trading",
+                #             "Construction & Site Engineering",
+                #             "Product Management",
+                #             "Project & Program Management",
+                #             "Content, Editorial & Journalism",
+                #             "Procurement & Supply Chain",
+                #             "Human Resources",
+                #             "Risk Management & Compliance",
+                #             "Food, Beverage & Hospitality",
+                #             "Merchandising, Retail & eCommerce",
+                #             "Administration & Facilities",
+                #             "Media Production & Entertainment",
+                #             "Strategic & Top Management",
+                #             "Environment Health & Safety",
+                #             "Legal & Regulatory",
+                #             "Aviation & Aerospace",
+                #             "CSR & Social Service",
+                #             "Sports, Fitness & Personal Care"
+                #         ]
+                #     # Display departments
+                #     print("\nAvailable Departments:")
+                #     for i, department in enumerate(departments, 1):
+                #         print(f"{i}. {department}")
+                    
+                #     # Allow multiple selections
+                #     selected_departments = []
+                #     while True:
+                #         department_input = input("\nEnter department number (or 0 to finish selection): ").strip()
+                #         if department_input == "0":
+                #             break
+
+                #         if department_input.isdigit() and 1 <= int(department_input) <= len(departments):
+                #             selected_index = int(department_input) - 1
+                #             selected_department = departments[selected_index]
+                #             if selected_department not in selected_departments:
+                #                 # Add the selected department if not already in list
+                #                 selected_departments.append(selected_department)
+                #                 print(f"✅ Added {selected_department}")
+                #                 print(f"Current selections: {', '.join(selected_departments)}")
+                #             else:
+                #                 print(f"⚠️ {selected_department} already selected")
+                #         else:
+                #             print(f"⚠️ Please enter a valid number between 1 and {len(departments)}, or 0 to finish")
+
+                #     if selected_departments:
+                #         # Update the previous preferences with the new selections
+                #         previous_preferences['departments'] = selected_departments
+                #         departments = selected_departments
+
+
+
+                # we need to ask user wanted to add the industry filters
+                # is yes the We need to move the industry realted code here from the main.py(current file) inluding calling the select_multiple_industries function.
+                    # and the user selected industries need to be added to the database here as comma seperated values.
+                # else no then go to next question 
+                # we need to ask user wanted to add the department fitlers
+                # if yes then we need to move the department realted code here from the main.py(current file) inluding calling the select_multiple_departments function.
+                    # and the user selected departments need to be added to the database here as comma seperated values.
+                # else no then continue
 
                 use_previous = input("\n❓ Do you want to use these previous search preferences? (y/n): ").strip().lower() == 'y'
 
@@ -1915,67 +1679,190 @@ def main():
                 s for s in search_skills
                 if not any(remove in s.lower() for remove in to_remove)]
             print(f"\n✅ Updated search skills: {search_skills}")
+        
+        # Ask if user wants to modify industry filters
+        modify_industries = input("\n❓ Do you want to add/modify industry filters? (y/n): ").lower() == 'y'
+        if modify_industries:
+            # Define industry types available on Naukri
+            industry_types = [
+                "IT Services & Consulting",
+                "BPM / BPO",
+                "Analytics / KPO / Research",
+                "Software Product",
+                "Internet",
+                "Electronic Components / Semiconductors",
+                "Electronics Manufacturing",
+                "Emerging Technologies",
+                "Hardware & Networking",
+                "Recruitment / Staffing",
+                "Management Consulting",
+                "Accounting / Auditing",
+                "Architecture / Interior Design",
+                "Facility Management Services",
+                "Design",
+                "Law Enforcement / Security Services",
+                "Legal",
+                "Content Development / Language",
+                "Banking",
+                "Financial Services",
+                "Investment Banking / Venture Capital / Private Equity",
+                "Insurance",
+                "FinTech / Payments",
+                "NBFC",
+                "Medical Services / Hospital",
+                "Pharmaceutical & Life Sciences",
+                "Biotechnology",
+                "Medical Devices & Equipment",
+                "Clinical Research / Contract Research",
+                "Education / Training",
+                "E-Learning / EdTech",
+                "Advertising & Marketing",
+                "Telecom / ISP",
+                "Film / Music / Entertainment",
+                "Gaming",
+                "TV / Radio",
+                "Printing & Publishing",
+                "Animation & VFX",
+                "Events / Live Entertainment",
+                "Sports / Leisure & Recreation",
+                "Industrial Equipment / Machinery",
+                "Automobile",
+                "Auto Components",
+                "Defence & Aerospace",
+                "Industrial Automation",
+                "Building Material",
+                "Electrical Equipment",
+                "Petrochemical / Plastics / Rubber",
+                "Chemicals",
+                "Packaging & Containers",
+                "Iron & Steel",
+                "Pulp & Paper",
+                "Fertilizers / Pesticides / Agro chemicals",
+                "Metals & Mining",
+                "Engineering & Construction",
+                "Power",
+                "Real Estate",
+                "Courier / Logistics",
+                "Oil & Gas",
+                "Aviation",
+                "Railways",
+                "Ports & Shipping",
+                "Water Treatment / Waste Management",
+                "Urban Transport",
+                "Retail",
+                "Consumer Electronics & Appliances",
+                "Textile & Apparel",
+                "Travel & Tourism",
+                "FMCG",
+                "Hotels & Restaurants",
+                "Fitness & Wellness",
+                "Food Processing",
+                "Beverage",
+                "Furniture & Furnishing",
+                "Gems & Jewellery",
+                "NGO / Social Services / Industry Associations",
+                "Agriculture / Forestry / Fishing",
+                "Government / Public Administration",
+                "Import & Export"
+            ]
+            # Display industry types
+            print("\nAvailable Industry Types:")
+            for i, industry in enumerate(industry_types, 1):
+                print(f"{i}. {industry}")
+            
+            # Allow multiple selections
+            selected_industries = []
+            while True:
+                industry_input = input("\nEnter industry number (or 0 to finish selection): ").strip()
+                if industry_input == "0":
+                    break
+                
+                if industry_input.isdigit() and 1 <= int(industry_input) <= len(industry_types):
+                    selected_index = int(industry_input) - 1
+                    selected_industry = industry_types[selected_index]
+                    if selected_industry not in selected_industries:
+                        # Add the selected industry if not already in list
+                        selected_industries.append(selected_industry)
+                        print(f"✅ Added {selected_industry}")
+                        print(f"Current selections: {', '.join(selected_industries)}")
+                    else:
+                        print(f"⚠️ {selected_industry} already selected")
+                else:
+                    print(f"⚠️ Please enter a valid number between 1 and {len(industry_types)}, or 0 to finish")
+            
+            if selected_industries:
+                # Update the previous preferences with the new selections
+                previous_preferences['industries'] = selected_industries
+                industries = selected_industries
 
-        # Ask for certifications
-        # if DATABASE_AVAILABLE and user_id:
-        #     # Check if user already has certifications
-        #     existing_certifications = get_user_certifications(user_id)
+        # Ask if user wants to modify department filters
+        modify_departments = input("\n❓ Do you want to add/modify department filters? (y/n): ").strip().lower() == 'y'
+        if modify_departments:
+            # Define departments available on Naukri
+            departments = [
+                    "Engineering - Software & QA",
+                    "Data Science & Analytics",
+                    "Engineering - Hardware & Networks",
+                    "IT & Information Security",
+                    "Customer Success, Service & Operations",
+                    "Finance & Accounting",
+                    "Quality Assurance",
+                    "Other",
+                    "Healthcare & Life Sciences",
+                    "Consulting",
+                    "Sales & Business Development",
+                    "Research & Development",
+                    "UX, Design & Architecture",
+                    "Marketing & Communication",
+                    "Teaching & Training",
+                    "Investments & Trading",
+                    "Construction & Site Engineering",
+                    "Product Management",
+                    "Project & Program Management",
+                    "Content, Editorial & Journalism",
+                    "Procurement & Supply Chain",
+                    "Human Resources",
+                    "Risk Management & Compliance",
+                    "Food, Beverage & Hospitality",
+                    "Merchandising, Retail & eCommerce",
+                    "Administration & Facilities",
+                    "Media Production & Entertainment",
+                    "Strategic & Top Management",
+                    "Environment Health & Safety",
+                    "Legal & Regulatory",
+                    "Aviation & Aerospace",
+                    "CSR & Social Service",
+                    "Sports, Fitness & Personal Care"
+                ]
+            # Display departments
+            print("\nAvailable Departments:")
+            for i, department in enumerate(departments, 1):
+                print(f"{i}. {department}")
+            
+            # Allow multiple selections
+            selected_departments = []
+            while True:
+                department_input = input("\nEnter department number (or 0 to finish selection): ").strip()
+                if department_input == "0":
+                    break
 
-        #     if existing_certifications:
-        #         print("\n✅ Found existing certifications:")
-        #         for cert in existing_certifications:
-        #             print(f"- {cert['certification_name']} ({cert['issuing_organization'] if cert['issuing_organization'] else 'No organization'})")
+                if department_input.isdigit() and 1 <= int(department_input) <= len(departments):
+                    selected_index = int(department_input) - 1
+                    selected_department = departments[selected_index]
+                    if selected_department not in selected_departments:
+                        # Add the selected department if not already in list
+                        selected_departments.append(selected_department)
+                        print(f"✅ Added {selected_department}")
+                        print(f"Current selections: {', '.join(selected_departments)}")
+                    else:
+                        print(f"⚠️ {selected_department} already selected")
+                else:
+                    print(f"⚠️ Please enter a valid number between 1 and {len(departments)}, or 0 to finish")
 
-        #         add_more = input("\n❓ Do you want to add more certifications? (y/n): ").strip().lower() == 'y'
-        #     else:
-        #         print("\n⚠️ No certifications found in your profile.")
-        #         add_more = input("❓ Do you want to add certifications? (y/n): ").strip().lower() == 'y'
-
-        #     if add_more:
-        #         print("\n📋 Let's add your certifications.")
-        #         print("These will help match you with jobs requiring specific certifications.")
-
-        #         while True:
-        #             cert_name = input("\nEnter certification name (or press Enter to finish): ").strip()
-        #             if not cert_name:
-        #                 break
-
-        #             # Check if this certification already exists
-        #             existing_cert = get_certification_by_name(user_id, cert_name)
-        #             if existing_cert:
-        #                 print(f"⚠️ Certification '{cert_name}' already exists in your profile.")
-        #                 continue
-
-        #             # Get additional details
-        #             org = input("Issuing organization (optional): ").strip()
-
-        #             # Ask which skill this certification is related to
-        #             print("\nWhich skill is this certification related to?")
-        #             for i, skill in enumerate(deduped_skills):
-        #                 print(f"{i+1}. {skill}")
-
-        #             skill_choice = input("Enter skill number (or press Enter to skip): ").strip()
-        #             related_skill = None
-        #             if skill_choice and skill_choice.isdigit():
-        #                 skill_idx = int(skill_choice) - 1
-        #                 if 0 <= skill_idx < len(deduped_skills):
-        #                     related_skill = deduped_skills[skill_idx]
-
-        #             # Create certification data
-        #             cert_data = {
-        #                 "certification_name": cert_name,
-        #                 "issuing_organization": org,
-        #                 "skill_name": related_skill
-        #             }
-
-        #             # Save to database
-        #             cert_id = save_user_certification(user_id, cert_data)
-        #             if cert_id:
-        #                 print(f"✅ Certification '{cert_name}' saved successfully.")
-        #             else:
-        #                 print(f"❌ Failed to save certification '{cert_name}'.")
-
-        #         print("\n✅ Certification collection complete.")
+            if selected_departments:
+                # Update the previous preferences with the new selections
+                previous_preferences['departments'] = selected_departments
+                departments = selected_departments
 
         # Create resume data
         resume_data = {
@@ -2091,7 +1978,9 @@ def main():
             locations=locations,
             experience=experience,
             freshness=freshness,
-            max_jobs=args.max_jobs
+            max_jobs=args.max_jobs,
+            industries = industries,
+            departments = departments
         )
 
         if job_links:
